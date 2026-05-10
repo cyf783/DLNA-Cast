@@ -39,6 +39,18 @@ import java.util.UUID
 
 open class DLNARendererService : AndroidUpnpServiceImpl() {
     companion object {
+        private const val PREFS_NAME = "dlna_dmr_prefs"
+        private const val KEY_DEVICE_NAME = "device_name"
+
+        @JvmStatic
+        fun setDeviceName(context: Context, deviceName: String) {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putString(KEY_DEVICE_NAME, deviceName)
+                .apply()
+        }
+
+        @JvmStatic
         fun startService(context: Context) {
 //            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 //                context.applicationContext.startForegroundService(Intent(context, DLNARendererService::class.java))
@@ -53,6 +65,7 @@ open class DLNARendererService : AndroidUpnpServiceImpl() {
     private lateinit var avTransportControl: AvTransportControl
     private lateinit var audioControl: AudioControl
     private var localDevice: LocalDevice? = null
+    private var deviceName: String? = null
 
     override fun createConfiguration(): UpnpServiceConfiguration {
         return object : AndroidUpnpServiceConfiguration() {
@@ -63,10 +76,12 @@ open class DLNARendererService : AndroidUpnpServiceImpl() {
     override fun onCreate() {
         logger.i("DLNARendererService create.")
         super.onCreate()
+        deviceName = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getString(KEY_DEVICE_NAME, null)
         avTransportControl = AVTransportController(applicationContext)
         audioControl = AudioRenderController(applicationContext)
         try {
-            localDevice = createRendererDevice(Utils.getHttpBaseUrl(applicationContext))
+            localDevice = createRendererDevice(Utils.getHttpBaseUrl(applicationContext), deviceName)
             upnpService.registry.addDevice(localDevice)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -88,19 +103,20 @@ open class DLNARendererService : AndroidUpnpServiceImpl() {
     }
 
     @Throws(ValidationException::class, IOException::class)
-    protected fun createRendererDevice(baseUrl: String): LocalDevice {
+    protected fun createRendererDevice(baseUrl: String, customDeviceName: String? = null): LocalDevice {
         val info = "DLNA_MediaPlayer-$baseUrl-${Build.MODEL}-${Build.MANUFACTURER}"
         val udn = try {
             UDN(UUID.nameUUIDFromBytes(info.toByteArray()))
         } catch (ex: Exception) {
             UDN(UUID.randomUUID())
         }
+        val displayName = customDeviceName ?: "DMR (${Build.MODEL})"
         logger.i("create local device: [MediaRenderer][${udn.identifierString.split("-").last()}]($baseUrl)")
         return LocalDevice(
             DeviceIdentity(udn),
             UDADeviceType("MediaRenderer", 1),
             DeviceDetails(
-                "DMR (${Build.MODEL})",
+                displayName,
                 ManufacturerDetails(Build.MANUFACTURER),
                 ModelDetails(Build.MODEL, "MPI MediaPlayer", "v1", baseUrl)
             ),
