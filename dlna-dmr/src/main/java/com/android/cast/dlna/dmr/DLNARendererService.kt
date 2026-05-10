@@ -43,13 +43,18 @@ open class DLNARendererService : AndroidUpnpServiceImpl() {
         private const val KEY_DEVICE_NAME = "device_name"
 
         @JvmStatic
+        fun setDeviceName(context: Context, deviceName: String) {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putString(KEY_DEVICE_NAME, deviceName)
+                .apply()
+        }
+
+        @JvmStatic
         @JvmOverloads
         fun startService(context: Context, deviceName: String? = null) {
             deviceName?.let {
-                context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                    .edit()
-                    .putString(KEY_DEVICE_NAME, it)
-                    .apply()
+                setDeviceName(context, it)
             }
 //            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 //                context.applicationContext.startForegroundService(Intent(context, DLNARendererService::class.java))
