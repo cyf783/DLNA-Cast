@@ -8,7 +8,7 @@ android {
     namespace 'com.android.cast.dlna.core'
     compileSdk 33
     defaultConfig {
-        minSdk 24
+        minSdk 21
         targetSdk 33
         consumerProguardFiles "consumer-rules.pro"
     }
@@ -30,10 +30,16 @@ dependencies {
     api 'org.fourthline.cling:cling-support:2.1.1'
     // Servlet
     api 'javax.servlet:javax.servlet-api:3.1.0'
-    // Jetty
-    api 'org.eclipse.jetty:jetty-server:8.1.21.v20160908'
-    api 'org.eclipse.jetty:jetty-servlet:8.1.21.v20160908'
-    api 'org.eclipse.jetty:jetty-client:8.1.21.v20160908'
+    // Jetty (exclude orbit dependencies for AGP 8.x compatibility)
+    api('org.eclipse.jetty:jetty-server:8.1.21.v20160908') {
+        exclude group: 'org.eclipse.jetty.orbit', module: 'javax.servlet'
+    }
+    api('org.eclipse.jetty:jetty-servlet:8.1.21.v20160908') {
+        exclude group: 'org.eclipse.jetty.orbit', module: 'javax.servlet'
+    }
+    api('org.eclipse.jetty:jetty-client:8.1.21.v20160908') {
+        exclude group: 'org.eclipse.jetty.orbit', module: 'javax.servlet'
+    }
     // Nano http
     api 'org.nanohttpd:nanohttpd:2.3.1'
     // Kotlin
